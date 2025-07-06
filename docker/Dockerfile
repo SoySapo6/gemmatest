@@ -1,37 +1,25 @@
-# Copyright 2024 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+FROM python:3.11-slim
 
-# Use PyTorch CUDA base image
-FROM pytorch/pytorch:2.1.2-cuda11.8-cudnn8-runtime
+# Instalar herramientas y dependencias del sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    wget \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-USER root
+# Instalar PyTorch + CUDA (desde pip)
+RUN pip install --upgrade pip
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
-# Install tools.
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update
-RUN apt-get install -y --no-install-recommends apt-utils
-RUN apt-get install -y --no-install-recommends curl
-RUN apt-get install -y --no-install-recommends wget
-RUN apt-get install -y --no-install-recommends git
+# Instalar dependencias de Gemma
+RUN pip install numpy==1.24.4 sentencepiece==0.1.99
 
-# Install libraries.
-ENV PIP_ROOT_USER_ACTION=ignore
-RUN python -m pip install --upgrade pip
-RUN pip install numpy==1.24.4
-RUN pip install sentencepiece==0.1.99
-
-# Install from source.
+# Copiar el código de Gemma
 COPY . /workspace/gemma/
 WORKDIR /workspace/gemma/
+
+# Instalar Gemma
 RUN pip install -e .
+
+CMD ["python"]
